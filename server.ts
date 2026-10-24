@@ -1,4 +1,5 @@
 import express from 'express';
+import { createServer as createViteServer } from 'vite';
 import fs from 'fs';
 import path from 'path';
 import dotenv from 'dotenv';
@@ -27,11 +28,8 @@ function getDriveId(url: string): string | null {
   return null;
 }
 
-// API Router for serverless compatibility
-const apiRouter = express.Router();
-
 // Image Proxy route to bypass Google Drive CORS restrictions for canvas/PDF generation
-apiRouter.get('/proxy-image', async (req, res) => {
+app.get('/api/proxy-image', async (req, res) => {
   try {
     const rawUrl = req.query.url as string;
     const fileId = req.query.id as string || (rawUrl ? getDriveId(rawUrl) : null);
@@ -77,8 +75,8 @@ apiRouter.get('/proxy-image', async (req, res) => {
   }
 });
 
-// Endpoint to fetch CSV dataset
-apiRouter.get('/default-dataset', async (_req, res) => {
+// Endpoint to fetch CSV dataset (ALWAYS performs a live sync from GOOGLE_SHEET_URL if configured)
+app.get('/api/default-dataset', async (_req, res) => {
   try {
     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.setHeader('Pragma', 'no-cache');
@@ -96,6 +94,7 @@ apiRouter.get('/default-dataset', async (_req, res) => {
         }
       }
 
+      // Append cache-busting timestamp to ensure fresh sync on every app start
       const liveSyncUrl = `${csvUrl}${csvUrl.includes('?') ? '&' : '?'}nocache=${Date.now()}`;
 
       try {
@@ -123,18 +122,18 @@ apiRouter.get('/default-dataset', async (_req, res) => {
   }
 });
 
-// Endpoint to return application config
-apiRouter.get('/config', (_req, res) => {
+// Endpoint to return application config (such as GOOGLE_FORM_URL from environment)
+app.get('/api/config', (_req, res) => {
   res.json({
     formUrl: process.env.GOOGLE_FORM_URL || 'https://docs.google.com/forms/d/e/1FAIpQLSc_ExampleForm/viewform',
     sheetUrl: process.env.GOOGLE_SHEET_URL || '',
   });
 });
 
-// Endpoint to authenticate login using JWT
-apiRouter.post('/login', (req, res) => {
+// Endpoint to authenticate login using JWT signed with JWT_SECRET from environment variables
+app.post('/api/login', (req, res) => {
   try {
-    const { appId, password } = req.body || {};
+    const { appId, password } = req.body;
 
     const expectedAppId = process.env.ADMIN_USER || 'admin@mitwpu.edu.in';
     const expectedPassword = process.env.ADMIN_PASSWORD || 'AdminPassword123!';
@@ -171,7 +170,7 @@ apiRouter.post('/login', (req, res) => {
 });
 
 // Endpoint to verify JWT Token validity
-apiRouter.get('/verify-token', (req, res) => {
+app.get('/api/verify-token', (req, res) => {
   try {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -188,10 +187,10 @@ apiRouter.get('/verify-token', (req, res) => {
   }
 });
 
-// Endpoint to fetch Google Sheet live CSV data
-apiRouter.post('/fetch-google-sheet', async (req, res) => {
+// Endpoint to fetch Google Sheet live CSV data by public link or sheet ID
+app.post('/api/fetch-google-sheet', async (req, res) => {
   try {
-    const { sheetUrl } = req.body || {};
+    const { sheetUrl } = req.body;
     if (!sheetUrl) {
       return res.status(400).json({ error: 'sheetUrl is required' });
     }
@@ -219,40 +218,40 @@ apiRouter.post('/fetch-google-sheet', async (req, res) => {
   }
 });
 
-// Server-side Gemini AI Chat Assistant Proxy Endpoint
-apiRouter.post('/ai-chat', async (req, res) => {
+// Gemini AI route for intelligent analysis / photo audit
+app.post('/api/ai/analyze', async (req, res) => {
   try {
+    const { prompt, studentData } = req.body;
     const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      return res.status(500).json({ error: 'GEMINI_API_KEY environment variable is not configured.' });
-    }
 
-    const { prompt, systemInstruction } = req.body || {};
-    if (!prompt) {
-      return res.status(400).json({ error: 'Prompt is required' });
+    if (!apiKey) {
+      return res.status(400).json({
+        error: 'GEMINI_API_KEY environment variable is not configured.'
+      });
     }
 
     const ai = new GoogleGenAI({ apiKey });
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
-      contents: prompt,
-      config: systemInstruction ? { systemInstruction } : undefined,
+      contents: `You are an AI Compliance Auditor for student placement records.
+Given the following student response records or request:
+"${prompt}"
+
+Dataset overview:
+${JSON.stringify(studentData ? studentData.slice(0, 30) : [], null, 2)}
+
+Provide a concise, helpful breakdown, verification summary, or answers to the user's query formatted in clean markdown.`,
     });
 
-    return res.json({ text: response.text });
+    res.json({ text: response.text });
   } catch (err: any) {
-    console.error('Gemini AI Chat Proxy Error:', err);
-    return res.status(500).json({ error: err.message || 'AI Assistant processing failed.' });
+    console.error('Gemini AI error:', err);
+    res.status(500).json({ error: err.message || 'AI request failed' });
   }
 });
 
-// Mount router under both /api and root /
-app.use('/api', apiRouter);
-app.use('/', apiRouter);
-
 async function startServer() {
   if (process.env.NODE_ENV !== 'production') {
-    const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
       server: { middlewareMode: true, hmr: false },
       appType: 'spa',
@@ -270,8 +269,4 @@ async function startServer() {
   });
 }
 
-if (!process.env.VERCEL) {
-  startServer();
-}
-
-export default app;
+startServer();
