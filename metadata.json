@@ -1,0 +1,6 @@
+{
+  "name": "Student Image & Document Portal",
+  "description": "Interactive gallery and database viewer for student placement celebration images, blazer photos, and passport photos with filtering, previewing, and PDF generation.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
