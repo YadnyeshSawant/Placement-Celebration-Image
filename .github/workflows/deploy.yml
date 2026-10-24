@@ -34,7 +34,7 @@ jobs:
           node-version: 20
 
       - name: Install dependencies
-        run: npm install
+        run: npm install -D @types/node
 
       - name: Build application
         run: npm run build
