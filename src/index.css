@@ -10,6 +10,7 @@
   }
 }
 
+/* Animations */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -23,4 +24,37 @@
 
 .animate-fade-in {
   animation: fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Media Query Responsive Utilities for Multiple Screen Displays */
+
+/* Small Mobile Screens (< 480px) */
+@media (max-width: 480px) {
+  .hide-xs {
+    display: none !important;
+  }
+  .text-fluid-title {
+    font-size: 1.125rem !important; /* 18px */
+    line-height: 1.35 !important;
+  }
+  .mobile-p-padding {
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+  }
+}
+
+/* Medium Mobile & Tablet Screens (481px - 768px) */
+@media (min-width: 481px) and (max-width: 768px) {
+  .tablet-grid-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+/* Large Screens & Ultra-Wide Monitors (1920px+) */
+@media (min-width: 1920px) {
+  .ultra-wide-container {
+    max-width: 1840px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
 }

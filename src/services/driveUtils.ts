@@ -71,3 +71,7 @@ export function getDriveEmbedPreviewUrl(url: string | undefined): string | null 
   }
   return null;
 }
+
+export function getDriveEmbedUrl(url: string | undefined): string | null {
+  return getDriveEmbedPreviewUrl(url);
+}

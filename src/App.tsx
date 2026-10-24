@@ -94,8 +94,8 @@ export default function App() {
 
   // Check saved session on mount & verify JWT token with server
   useEffect(() => {
-    const savedUser = sessionStorage.getItem('app_admin_user');
-    const savedToken = sessionStorage.getItem('app_auth_token');
+    const savedUser = localStorage.getItem('app_admin_user') || sessionStorage.getItem('app_admin_user');
+    const savedToken = localStorage.getItem('app_auth_token') || sessionStorage.getItem('app_auth_token');
 
     if (savedUser && savedToken) {
       fetch('/api/verify-token', {
@@ -116,18 +116,6 @@ export default function App() {
         });
     }
   }, [handleLogout]);
-
-  // Tab / Window close auto-logout listener
-  useEffect(() => {
-    const handleUnload = () => {
-      sessionStorage.clear();
-    };
-
-    window.addEventListener('pagehide', handleUnload);
-    return () => {
-      window.removeEventListener('pagehide', handleUnload);
-    };
-  }, []);
 
   // Inactivity Auto-Logout Timer (5 Minutes)
   useEffect(() => {
@@ -161,8 +149,8 @@ export default function App() {
 
   const handleFinishSplash = () => {
     setIsSplashLoading(false);
-    const savedUser = sessionStorage.getItem('app_admin_user');
-    const savedToken = sessionStorage.getItem('app_auth_token');
+    const savedUser = localStorage.getItem('app_admin_user') || sessionStorage.getItem('app_admin_user');
+    const savedToken = localStorage.getItem('app_auth_token') || sessionStorage.getItem('app_auth_token');
     if (savedUser && savedToken && isLoggedIn) {
       setCurrentScreen('portal');
     } else {
@@ -173,6 +161,8 @@ export default function App() {
   const handleLoginSuccess = (token: string, userAppId: string) => {
     sessionStorage.setItem('app_auth_token', token);
     sessionStorage.setItem('app_admin_user', userAppId);
+    localStorage.setItem('app_auth_token', token);
+    localStorage.setItem('app_admin_user', userAppId);
     
     setIsLoggedIn(true);
     setLoggedInUser(userAppId);
@@ -189,15 +179,19 @@ export default function App() {
   const [isBatchPdfOpen, setIsBatchPdfOpen] = useState(false);
   const [isAiAssistantOpen, setIsAiAssistantOpen] = useState(false);
 
-  // Export Individual Student PDF with Loading Overlay & Download Confirmation
+  // Export Individual Student PDF with Instant Loading Overlay & Download Confirmation
   const handleExportIndividualPdf = async (student: StudentRecord) => {
+    // 1. Instantly trigger loading screen overlay
     setExportLoading({
       isExporting: true,
       studentName: student.fullName,
       prn: student.prn,
-      progress: 15,
+      progress: 10,
       isReady: false,
     });
+
+    // 2. Yield UI thread so browser repaints DOM and renders loading screen immediately
+    await new Promise((resolve) => setTimeout(resolve, 50));
 
     try {
       const prepared = await prepareStudentPdfObject(student, (percent: number) => {
@@ -218,19 +212,23 @@ export default function App() {
     }
   };
 
-  // Export Task with Loading Overlay & Download Confirmation
+  // Export Task with Instant Loading Overlay & Download Confirmation
   const handleStartExportWithLoading = async (
     titleName: string,
     prnCode: string,
     task: () => Promise<void>
   ) => {
+    // 1. Instantly trigger loading screen overlay
     setExportLoading({
       isExporting: true,
       studentName: titleName,
       prn: prnCode,
-      progress: 15,
+      progress: 10,
       isReady: false,
     });
+
+    // 2. Yield UI thread so browser repaints DOM and renders loading screen immediately
+    await new Promise((resolve) => setTimeout(resolve, 50));
 
     try {
       await task();

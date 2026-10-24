@@ -321,7 +321,33 @@ export async function generateBatchCatalogPdf(
       ? `<span style="color:#16a34a; font-weight:700;">&#10003; ${okLabel}</span>`
       : `<span style="color:#dc2626; font-weight:600;">&#10007; Missing</span>`;
 
-  const studentRowsHtml = students
+  // Custom multi-tier sorting: Year -> Class (Department) -> Division -> PRN
+  const yearWeight: Record<string, number> = {
+    FY: 1,
+    SY: 2,
+    TY: 3,
+    NA: 4,
+  };
+
+  const sortedStudents = [...students].sort((a, b) => {
+    // 1. Sort by Current Year
+    const yearA = yearWeight[a.currentYear] ?? 99;
+    const yearB = yearWeight[b.currentYear] ?? 99;
+    if (yearA !== yearB) return yearA - yearB;
+
+    // 2. Sort by Class / Department
+    const deptCompare = a.department.localeCompare(b.department);
+    if (deptCompare !== 0) return deptCompare;
+
+    // 3. Sort by Division
+    const divCompare = a.division.localeCompare(b.division);
+    if (divCompare !== 0) return divCompare;
+
+    // 4. Sort by PRN (numeric-aware)
+    return a.prn.localeCompare(b.prn, undefined, { numeric: true });
+  });
+
+  const studentRowsHtml = sortedStudents
     .map(
       (s, idx) => `
     <tr style="border-bottom: 1px solid #e2e8f0; font-size: 12px;">
@@ -348,7 +374,7 @@ export async function generateBatchCatalogPdf(
     <div style="border: 1px solid #cbd5e1; border-radius: 12px; padding: 24px; background: #ffffff; box-sizing: border-box;">
       <div style="border-bottom: 2px solid #2563eb; padding-bottom: 12px; margin-bottom: 16px; text-align: center;">
         <h2 style="margin: 0; font-size: 20px; line-height: 26px; font-weight: 800; color: #1e3a8a;">STUDENT DOCUMENT CATALOG &amp; VERIFICATION SUMMARY</h2>
-        <div style="font-size: 12px; line-height: 18px; color: #64748b; margin-top: 4px;">Filter Context: <strong>${esc(filterTitle)}</strong> | Total Records: <strong>${students.length}</strong></div>
+        <div style="font-size: 12px; line-height: 18px; color: #64748b; margin-top: 4px;">Filter Context: <strong>${esc(filterTitle)}</strong> | Total Records: <strong>${students.length}</strong> | Order: <strong>Year → Class → Division → PRN</strong></div>
       </div>
 
       <table style="width: 100%; border-collapse: collapse; table-layout: auto;">
