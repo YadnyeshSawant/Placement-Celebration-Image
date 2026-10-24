@@ -39,7 +39,14 @@ export const LoginPage: React.FC<LoginPageProps> = ({
         body: JSON.stringify({ appId: appId.trim(), password: password.trim() }),
       });
 
-      const data = await response.json();
+      const responseText = await response.text();
+      let data: any = {};
+      try {
+        data = JSON.parse(responseText);
+      } catch {
+        throw new Error(`Server Error (${response.status}): ${responseText.slice(0, 120)}`);
+      }
+
       if (!response.ok || !data.success) {
         throw new Error(data.error || 'Invalid credentials. Please verify your App ID and Password.');
       }
