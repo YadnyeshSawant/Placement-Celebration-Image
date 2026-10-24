@@ -27,11 +27,11 @@ function getDriveId(url: string): string | null {
   return null;
 }
 
-// API Router for serverless compatibility
+// API Router for serverless & local development compatibility
 const apiRouter = express.Router();
 
 // Image Proxy route to bypass Google Drive CORS restrictions for canvas/PDF generation
-apiRouter.get('/proxy-image', async (req, res) => {
+apiRouter.get(['/proxy-image', '/api/proxy-image'], async (req, res) => {
   try {
     const rawUrl = req.query.url as string;
     const fileId = req.query.id as string || (rawUrl ? getDriveId(rawUrl) : null);
@@ -78,7 +78,7 @@ apiRouter.get('/proxy-image', async (req, res) => {
 });
 
 // Endpoint to fetch CSV dataset
-apiRouter.get('/default-dataset', async (_req, res) => {
+apiRouter.get(['/default-dataset', '/api/default-dataset'], async (_req, res) => {
   try {
     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.setHeader('Pragma', 'no-cache');
@@ -124,7 +124,7 @@ apiRouter.get('/default-dataset', async (_req, res) => {
 });
 
 // Endpoint to return application config
-apiRouter.get('/config', (_req, res) => {
+apiRouter.get(['/config', '/api/config'], (_req, res) => {
   res.json({
     formUrl: process.env.GOOGLE_FORM_URL || 'https://docs.google.com/forms/d/e/1FAIpQLSc_ExampleForm/viewform',
     sheetUrl: process.env.GOOGLE_SHEET_URL || '',
@@ -132,7 +132,7 @@ apiRouter.get('/config', (_req, res) => {
 });
 
 // Endpoint to authenticate login using JWT
-apiRouter.post('/login', (req, res) => {
+apiRouter.post(['/login', '/api/login'], (req, res) => {
   try {
     const { appId, password } = req.body || {};
 
@@ -171,7 +171,7 @@ apiRouter.post('/login', (req, res) => {
 });
 
 // Endpoint to verify JWT Token validity
-apiRouter.get('/verify-token', (req, res) => {
+apiRouter.get(['/verify-token', '/api/verify-token'], (req, res) => {
   try {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -189,7 +189,7 @@ apiRouter.get('/verify-token', (req, res) => {
 });
 
 // Endpoint to fetch Google Sheet live CSV data
-apiRouter.post('/fetch-google-sheet', async (req, res) => {
+apiRouter.post(['/fetch-google-sheet', '/api/fetch-google-sheet'], async (req, res) => {
   try {
     const { sheetUrl } = req.body || {};
     if (!sheetUrl) {
@@ -220,7 +220,7 @@ apiRouter.post('/fetch-google-sheet', async (req, res) => {
 });
 
 // Server-side Gemini AI Chat Assistant Proxy Endpoint
-apiRouter.post('/ai-chat', async (req, res) => {
+apiRouter.post(['/ai-chat', '/api/ai-chat'], async (req, res) => {
   try {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
@@ -251,23 +251,25 @@ app.use('/api', apiRouter);
 app.use('/', apiRouter);
 
 async function startServer() {
-  if (process.env.NODE_ENV !== 'production') {
+  if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
     const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
       server: { middlewareMode: true, hmr: false },
       appType: 'spa',
     });
     app.use(vite.middlewares);
-  } else {
+  } else if (!process.env.VERCEL) {
     app.use(express.static(path.join(process.cwd(), 'dist')));
     app.get('*', (_req, res) => {
       res.sendFile(path.join(process.cwd(), 'dist', 'index.html'));
     });
   }
 
-  app.listen(PORT, () => {
-    console.log(`Server listening on http://0.0.0.0:${PORT}`);
-  });
+  if (!process.env.VERCEL) {
+    app.listen(PORT, () => {
+      console.log(`Server listening on http://0.0.0.0:${PORT}`);
+    });
+  }
 }
 
 if (!process.env.VERCEL) {
