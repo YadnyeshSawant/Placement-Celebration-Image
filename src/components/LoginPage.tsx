@@ -166,8 +166,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({
               disabled={loading || !appId || !password}
               className="w-full py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 disabled:opacity-50 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 shadow-lg shadow-blue-600/20 transition-all mt-2"
             >
-              <span>{loading ? 'Authenticating JWT...' : 'Sign In to Portal'}</span>
-              <ArrowRight className="w-4 h-4" />
+              <span>{loading ? 'Authenticating ...' : 'Sign In to Portal'}</span>
+              
             </button>
 
           </form>
@@ -181,7 +181,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             <ul className="list-disc list-inside space-y-0.5 text-slate-500 text-[10.5px]">
               <li>5-minute inactivity auto-logout</li>
               <li>Auto-logout upon closing tab or window</li>
-              <li>Protected JWT token signature verification</li>
             </ul>
           </div>
 

@@ -1,5 +1,5 @@
-import React from 'react';
-import { Users, ShieldCheck, AlertCircle } from 'lucide-react';
+import React, { useState } from 'react';
+import { Users, ShieldCheck, AlertCircle, ChevronDown, ChevronUp, BarChart2 } from 'lucide-react';
 import { StudentRecord } from '../types/student';
 
 interface StatsOverviewProps {
@@ -7,6 +7,26 @@ interface StatsOverviewProps {
 }
 
 export const StatsOverview: React.FC<StatsOverviewProps> = ({ students }) => {
+  const [isCollapsed, setIsCollapsed] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('stats_overview_collapsed') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  const toggleCollapsed = () => {
+    setIsCollapsed((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem('stats_overview_collapsed', String(next));
+      } catch {
+        // Ignore storage errors
+      }
+      return next;
+    });
+  };
+
   const totalStudents = students.length;
   
   const withBothPhotos = students.filter(
@@ -32,8 +52,64 @@ export const StatsOverview: React.FC<StatsOverviewProps> = ({ students }) => {
   const csCount = getDeptCount('MSC CS');
   const btCount = getDeptCount('MSC BT');
 
+  if (isCollapsed) {
+    return (
+      <div className="bg-white text-slate-900 rounded-2xl px-4 py-3 mb-6 shadow-xs border border-slate-200/90 flex flex-wrap items-center justify-between gap-3 transition-all">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="p-1.5 bg-blue-50 text-blue-600 rounded-lg shrink-0">
+            <BarChart2 className="w-4 h-4" />
+          </div>
+          <span className="font-bold text-xs sm:text-sm text-slate-800 whitespace-nowrap">
+            Statistics &amp; SY Targets
+          </span>
+          <span className="text-slate-300 hidden sm:inline">•</span>
+          <div className="flex flex-wrap items-center gap-1.5 text-xs">
+            <span className="px-2 py-0.5 bg-blue-50 text-blue-700 font-bold rounded-md text-[11px]">
+              {totalStudents} / 519 Submitted
+            </span>
+            <span className="px-2 py-0.5 bg-amber-50 text-amber-800 font-bold rounded-md text-[11px]">
+              {pendingSubmissions} Pending
+            </span>
+            <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 font-bold rounded-md text-[11px] hidden xs:inline">
+              {withBothPhotos} Photos Verified
+            </span>
+          </div>
+        </div>
+
+        <button
+          onClick={toggleCollapsed}
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200/80 text-slate-700 hover:text-slate-900 rounded-xl text-xs font-bold transition-colors cursor-pointer shrink-0"
+          title="Open Statistics & Targets Overview"
+        >
+          <span>Show Stats</span>
+          <ChevronDown className="w-4 h-4 text-slate-500" />
+        </button>
+      </div>
+    );
+  }
+
   return (
-    <div className="bg-white text-slate-900 rounded-2xl p-4 sm:p-5 mb-6 shadow-xs border border-slate-200/90">
+    <div className="bg-white text-slate-900 rounded-2xl p-4 sm:p-5 mb-6 shadow-xs border border-slate-200/90 transition-all">
+      {/* Header bar with collapse button */}
+      <div className="flex items-center justify-between mb-3.5 pb-2.5 border-b border-slate-100">
+        <div className="flex items-center gap-2">
+          <div className="p-1.5 bg-blue-50 text-blue-600 rounded-lg shrink-0">
+            <BarChart2 className="w-4 h-4" />
+          </div>
+          <h3 className="font-bold text-xs sm:text-sm text-slate-800">
+            Cohort Statistics &amp; SY Targets
+          </h3>
+        </div>
+
+        <button
+          onClick={toggleCollapsed}
+          className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-100 hover:bg-slate-200/80 text-slate-600 hover:text-slate-900 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
+          title="Collapse Statistics Overview"
+        >
+          <span>Collapse</span>
+          <ChevronUp className="w-3.5 h-3.5 text-slate-500" />
+        </button>
+      </div>
       
       {/* Metric Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
