@@ -62,12 +62,25 @@ export function parseCSVToStudentRecords(csvContent: string): StudentRecord[] {
         blazerPhotoUrl: blazerPhotoUrl || '',
         passportPhotoUrl: passportPhotoUrl || '',
         division: division || 'NA',
-        currentYear: currentYear || 'NA',
+        currentYear: sanitizeYear(currentYear),
       });
     }
   });
 
   return records;
+}
+
+function sanitizeYear(yearRaw: string): string {
+  if (!yearRaw) return 'NA';
+  const clean = yearRaw.trim();
+  const upper = clean.toUpperCase();
+
+  if (upper.includes('HONOR') || upper.includes('HONOUR')) return 'Honors';
+  if (upper === 'FY' || upper.includes('FIRST') || upper.includes('1ST')) return 'FY';
+  if (upper === 'SY' || upper.includes('SECOND') || upper.includes('2ND')) return 'SY';
+  if (upper === 'TY' || upper.includes('THIRD') || upper.includes('3RD')) return 'TY';
+
+  return clean || 'NA';
 }
 
 function sanitizeDepartment(deptRaw: string): string {

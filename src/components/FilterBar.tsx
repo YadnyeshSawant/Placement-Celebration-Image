@@ -91,10 +91,10 @@ export const FilterBar: React.FC<FilterBarProps> = ({
               className="w-full py-1.5 px-1.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 truncate"
             >
               <option value="ALL">Year: All</option>
-              <option value="SY">SY</option>
               <option value="FY">FY</option>
+              <option value="SY">SY</option>
               <option value="TY">TY</option>
-              <option value="NA">NA</option>
+              <option value="Honors">Honors</option>
             </select>
           </div>
 

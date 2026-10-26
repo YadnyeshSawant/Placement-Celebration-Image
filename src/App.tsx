@@ -18,6 +18,7 @@ import { LoginPage } from './components/LoginPage';
 import { LoadingScreen } from './components/LoadingScreen';
 import { GoogleFormModal } from './components/GoogleFormModal';
 import { PdfExportLoadingModal } from './components/PdfExportLoadingModal';
+import { SummaryModal } from './components/SummaryModal';
 import { AlertCircle, RefreshCw, Layers } from 'lucide-react';
 
 const INITIAL_FILTERS: FilterState = {
@@ -177,6 +178,7 @@ export default function App() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [studentToEdit, setStudentToEdit] = useState<StudentRecord | null>(null);
   const [isBatchPdfOpen, setIsBatchPdfOpen] = useState(false);
+  const [isSummaryOpen, setIsSummaryOpen] = useState(false);
   const [isAiAssistantOpen, setIsAiAssistantOpen] = useState(false);
 
   // Export Individual Student PDF with Instant Loading Overlay & Download Confirmation
@@ -291,7 +293,7 @@ export default function App() {
         }
 
         if (filters.currentYear !== 'ALL') {
-          if (s.currentYear !== filters.currentYear) return false;
+          if (s.currentYear.trim().toLowerCase() !== filters.currentYear.trim().toLowerCase()) return false;
         }
 
         if (filters.photoFilter === 'both_available') {
@@ -443,6 +445,7 @@ export default function App() {
           }
         }}
         onOpenBatchPdf={() => setIsBatchPdfOpen(true)}
+        onOpenSummary={() => setIsSummaryOpen(true)}
         onExportCsv={handleExportCsv}
         isLoading={isLoading}
         onRefreshData={loadDefaultDataset}
@@ -647,6 +650,15 @@ export default function App() {
           }
           onClose={() => setIsBatchPdfOpen(false)}
           onStartExportWithLoading={handleStartExportWithLoading}
+        />
+      )}
+
+      {/* Records Summary Modal */}
+      {isSummaryOpen && (
+        <SummaryModal
+          students={students}
+          filteredStudents={filteredStudents}
+          onClose={() => setIsSummaryOpen(false)}
         />
       )}
 

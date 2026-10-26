@@ -326,7 +326,9 @@ export async function generateBatchCatalogPdf(
     FY: 1,
     SY: 2,
     TY: 3,
-    NA: 4,
+    Honors: 4,
+    HONORS: 4,
+    NA: 5,
   };
 
   const sortedStudents = [...students].sort((a, b) => {

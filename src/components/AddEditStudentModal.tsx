@@ -149,10 +149,10 @@ export const AddEditStudentModal: React.FC<AddEditStudentModalProps> = ({
                 onChange={(e) => setCurrentYear(e.target.value)}
                 className="w-full px-2.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option value="SY">SY</option>
                 <option value="FY">FY</option>
+                <option value="SY">SY</option>
                 <option value="TY">TY</option>
-                <option value="NA">NA</option>
+                <option value="Honors">Honors</option>
               </select>
             </div>
           </div>

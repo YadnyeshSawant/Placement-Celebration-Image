@@ -8,7 +8,7 @@ export interface StudentRecord {
   blazerPhotoUrl: string; // Creative Photo in Plain Background and Complete Uniform Including Blazer
   passportPhotoUrl: string; // Latest Passport Size Photo
   division: string; // A, B, C, D, E, NA
-  currentYear: string; // SY, FY, TY, NA
+  currentYear: string; // FY, SY, TY, Honors, NA
 }
 
 export type DepartmentType =
