@@ -18,6 +18,7 @@ interface SummaryModalProps {
   students: StudentRecord[];
   filteredStudents: StudentRecord[];
   onClose: () => void;
+  isInline?: boolean;
 }
 
 export const SY_DEPARTMENT_TARGETS: Record<string, number> = {
@@ -34,6 +35,7 @@ export const SummaryModal: React.FC<SummaryModalProps> = ({
   students,
   filteredStudents,
   onClose,
+  isInline = true,
 }) => {
   const [activeTab, setActiveTab] = useState<TabType>('department');
   const [useFilteredData, setUseFilteredData] = useState(false);
@@ -110,9 +112,15 @@ export const SummaryModal: React.FC<SummaryModalProps> = ({
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [targetStudents]);
 
-  // Breakdown by Year
+  // Breakdown by Year with SY Target Tracking
   const yearSummary = useMemo(() => {
     const map = new Map<string, { total: number; bothPhotos: number; missingPhotos: number }>();
+
+    // Pre-populate core academic years FY and SY so they always appear
+    ['FY', 'SY'].forEach((yr) => {
+      map.set(yr, { total: 0, bothPhotos: 0, missingPhotos: 0 });
+    });
+
     targetStudents.forEach((s) => {
       const year = s.currentYear || 'NA';
       const cur = map.get(year) || { total: 0, bothPhotos: 0, missingPhotos: 0 };
@@ -128,7 +136,23 @@ export const SummaryModal: React.FC<SummaryModalProps> = ({
     const yearOrder: Record<string, number> = { FY: 1, SY: 2, TY: 3, Honors: 4, NA: 5 };
 
     return Array.from(map.entries())
-      .map(([name, data]) => ({ name, ...data }))
+      .map(([name, data]) => {
+        const isSY = name.toUpperCase() === 'SY';
+        const isFY = name.toUpperCase() === 'FY';
+        const target = isSY ? TOTAL_SY_EXPECTED : 0;
+        const pendingForms = isSY ? Math.max(0, TOTAL_SY_EXPECTED - data.total) : null;
+        const targetProgress = isSY ? Math.round((data.total / TOTAL_SY_EXPECTED) * 100) : null;
+
+        return {
+          name,
+          ...data,
+          isSY,
+          isFY,
+          target,
+          pendingForms,
+          targetProgress,
+        };
+      })
       .sort((a, b) => (yearOrder[a.name] ?? 99) - (yearOrder[b.name] ?? 99));
   }, [targetStudents]);
 
@@ -223,9 +247,15 @@ export const SummaryModal: React.FC<SummaryModalProps> = ({
       }
     });
 
-    text += `\n--- BY YEAR ---\n`;
+    text += `\n--- BY YEAR (SY TARGET: 519, FY TARGET: TBD) ---\n`;
     yearSummary.forEach((y) => {
-      text += `${y.name}: ${y.total} students (${y.bothPhotos} complete, ${y.missingPhotos} pending photos)\n`;
+      if (y.target > 0) {
+        text += `${y.name}: Target ${y.target} | Submitted ${y.total} | Pending Forms: ${y.pendingForms} | Complete Photos: ${y.bothPhotos} (${y.missingPhotos} pending photos) [${y.targetProgress}% of SY target]\n`;
+      } else if (y.isFY) {
+        text += `${y.name}: Target TBD | Submitted ${y.total} | Complete Photos: ${y.bothPhotos} (${y.missingPhotos} pending photos)\n`;
+      } else {
+        text += `${y.name}: Submitted ${y.total} | Complete Photos: ${y.bothPhotos} (${y.missingPhotos} pending photos)\n`;
+      }
     });
 
     text += `\n--- BY DIVISION ---\n`;
@@ -244,53 +274,66 @@ export const SummaryModal: React.FC<SummaryModalProps> = ({
     });
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 md:p-6 bg-slate-950/75 backdrop-blur-md animate-fade-in">
-      <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-6xl 2xl:max-w-7xl h-[94vh] max-h-[96vh] flex flex-col overflow-hidden">
-        
-        {/* Header */}
-        <div className="bg-white p-4 sm:p-6 border-b border-slate-200 flex items-center justify-between shrink-0">
-          <div className="flex items-center space-x-3.5">
-            <div className="p-3 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-2xl text-white shadow-md shadow-blue-500/20">
-              <BarChart2 className="w-6 h-6 sm:w-7 sm:h-7" />
-            </div>
-            <div>
+  const modalContent = (
+    <div
+      className={`bg-white rounded-3xl border border-slate-200 w-full flex flex-col overflow-hidden ${
+        isInline
+          ? 'shadow-lg ring-1 ring-slate-900/5'
+          : 'shadow-2xl max-w-6xl 2xl:max-w-7xl h-[94vh] max-h-[96vh]'
+      }`}
+    >
+      {/* Header */}
+      <div className="bg-white p-4 sm:p-6 border-b border-slate-200 flex items-center justify-between shrink-0">
+        <div className="flex items-center space-x-3.5">
+          <div className="p-3 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-2xl text-white shadow-md shadow-blue-500/20">
+            <BarChart2 className="w-6 h-6 sm:w-7 sm:h-7" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
               <h3 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">
                 Records Summary & Statistics
               </h3>
-              <p className="text-xs sm:text-sm text-slate-500 font-medium mt-0.5">
-                Aggregated records count &amp; pending submissions categorized per Department, Division, and Year
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center space-x-2.5">
-            <button
-              onClick={handleCopySummary}
-              className="px-3 sm:px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs sm:text-sm font-bold rounded-xl transition-colors flex items-center gap-2 shadow-2xs"
-              title="Copy text report to clipboard"
-            >
-              {copied ? (
-                <>
-                  <Check className="w-4 h-4 text-emerald-600" />
-                  <span className="text-emerald-700 font-bold">Report Copied!</span>
-                </>
-              ) : (
-                <>
-                  <Copy className="w-4 h-4 text-slate-500" />
-                  <span>Copy Report</span>
-                </>
+              {isInline && (
+                <span className="hidden sm:inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200/60">
+                  Live View
+                </span>
               )}
-            </button>
-
-            <button
-              onClick={onClose}
-              className="p-2.5 hover:bg-slate-100 text-slate-400 hover:text-slate-700 rounded-xl transition-colors"
-            >
-              <X className="w-6 h-6" />
-            </button>
+            </div>
+            <p className="text-xs sm:text-sm text-slate-500 font-medium mt-0.5">
+              Aggregated records count &amp; pending submissions categorized per Department, Division, and Year
+            </p>
           </div>
         </div>
+
+        <div className="flex items-center space-x-2.5">
+          <button
+            onClick={handleCopySummary}
+            className="px-3 sm:px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs sm:text-sm font-bold rounded-xl transition-colors flex items-center gap-2 shadow-2xs"
+            title="Copy text report to clipboard"
+          >
+            {copied ? (
+              <>
+                <Check className="w-4 h-4 text-emerald-600" />
+                <span className="text-emerald-700 font-bold">Report Copied!</span>
+              </>
+            ) : (
+              <>
+                <Copy className="w-4 h-4 text-slate-500" />
+                <span>Copy Report</span>
+              </>
+            )}
+          </button>
+
+          <button
+            onClick={onClose}
+            className="px-3 py-2 bg-slate-100 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 text-slate-600 rounded-xl transition-colors flex items-center gap-1.5 text-xs font-bold border border-slate-200 shadow-2xs group"
+            title="Close Records Summary"
+          >
+            <X className="w-4 h-4 text-slate-500 group-hover:text-rose-600 transition-colors" />
+            <span>Close</span>
+          </button>
+        </div>
+      </div>
 
         {/* Top Metric Cards: 5 Cards Grid */}
         <div className="p-4 sm:p-6 bg-slate-50/80 border-b border-slate-200 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-3.5 shrink-0">
@@ -436,7 +479,7 @@ export const SummaryModal: React.FC<SummaryModalProps> = ({
         </div>
 
         {/* Tab Content Body */}
-        <div className="p-4 sm:p-6 overflow-y-auto flex-1 space-y-4">
+        <div className={`p-4 sm:p-6 overflow-y-auto space-y-4 ${isInline ? 'max-h-[640px]' : 'flex-1'}`}>
           
           {/* TAB 1: PER DEPARTMENT */}
           {activeTab === 'department' && (
@@ -627,52 +670,123 @@ export const SummaryModal: React.FC<SummaryModalProps> = ({
           {/* TAB 3: PER YEAR */}
           {activeTab === 'year' && (
             <div className="space-y-3">
+              {/* Year Target Sub-header banner */}
+              <div className="flex flex-wrap items-center justify-between gap-2 p-3 bg-emerald-50/70 border border-emerald-200/80 rounded-2xl text-xs text-emerald-950">
+                <div className="flex items-center space-x-2">
+                  <span className="font-extrabold uppercase tracking-wider text-[10px] bg-emerald-200/80 text-emerald-900 px-2 py-0.5 rounded-md">
+                    Academic Year Targets
+                  </span>
+                  <span className="font-semibold text-slate-700">
+                    SY Expected Cohort: <strong className="text-emerald-900 font-bold">519 Students</strong> • FY Cohort: <span className="italic text-slate-500 font-medium">Target pending (TBD)</span>
+                  </span>
+                </div>
+                {(() => {
+                  const syItem = yearSummary.find((y) => y.name === 'SY');
+                  const syPending = syItem ? Math.max(0, TOTAL_SY_EXPECTED - syItem.total) : TOTAL_SY_EXPECTED;
+                  return (
+                    <div className="text-[11px] font-bold text-slate-500">
+                      SY Pending Forms: <strong className="text-amber-700 font-mono text-xs">{syPending}</strong>
+                    </div>
+                  );
+                })()}
+              </div>
+
               <div className="border border-slate-200 rounded-2xl overflow-hidden shadow-2xs">
-                <table className="w-full text-left text-xs border-collapse">
+                <table className="w-full text-left text-xs sm:text-sm border-collapse">
                   <thead>
                     <tr className="bg-slate-100 text-slate-600 font-bold uppercase tracking-wider border-b border-slate-200 text-[11px]">
                       <th className="py-2.5 px-3.5">Academic Year</th>
-                      <th className="py-2.5 px-3.5 text-center">Registered</th>
-                      <th className="py-2.5 px-3.5 text-center hidden sm:table-cell">Complete Photos</th>
-                      <th className="py-2.5 px-3.5 text-center hidden sm:table-cell text-rose-700">Pending Photos</th>
-                      <th className="py-2.5 px-3.5 text-right">Completion</th>
+                      <th className="py-2.5 px-3.5 text-center">Cohort Target</th>
+                      <th className="py-2.5 px-3.5 text-center">Submitted</th>
+                      <th className="py-2.5 px-3.5 text-center text-amber-800">Pending Forms</th>
+                      <th className="py-2.5 px-3.5 text-center hidden md:table-cell text-emerald-700">Complete Photos</th>
+                      <th className="py-2.5 px-3.5 text-center hidden md:table-cell text-rose-700">Pending Photos</th>
+                      <th className="py-2.5 px-3.5 text-right">Target Progress</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {yearSummary.map((yr) => {
-                      const pct = yr.total ? Math.round((yr.bothPhotos / yr.total) * 100) : 0;
+                      const photoPct = yr.total ? Math.round((yr.bothPhotos / yr.total) * 100) : 0;
                       return (
                         <tr key={yr.name} className="hover:bg-slate-50 transition-colors">
-                          <td className="py-2.5 px-3.5 font-bold text-slate-900">
+                          <td className="py-3 px-3.5 font-bold text-slate-900">
                             <span className="inline-block px-2.5 py-0.5 rounded-lg bg-emerald-50 text-emerald-800 font-extrabold border border-emerald-200">
                               {yr.name === 'Honors' ? 'Honors Year' : yr.name === 'NA' ? 'Unspecified (NA)' : `Year ${yr.name}`}
                             </span>
                           </td>
-                          <td className="py-2.5 px-3.5 text-center font-extrabold text-slate-800 font-mono text-sm">
+                          <td className="py-3 px-3.5 text-center font-extrabold text-slate-700 font-mono">
+                            {yr.isSY ? (
+                              <span className="px-2 py-0.5 bg-emerald-100 text-emerald-900 rounded-md font-bold text-xs">
+                                519
+                              </span>
+                            ) : yr.isFY ? (
+                              <span className="px-2 py-0.5 bg-amber-50 text-amber-700 border border-amber-200 rounded-md font-semibold text-[11px]" title="FY target to be configured later">
+                                TBD
+                              </span>
+                            ) : (
+                              <span className="text-slate-400">-</span>
+                            )}
+                          </td>
+                          <td className="py-3 px-3.5 text-center font-extrabold text-blue-900 font-mono">
                             {yr.total}
                           </td>
-                          <td className="py-2.5 px-3.5 text-center text-emerald-700 font-bold hidden sm:table-cell">
+                          <td className="py-3 px-3.5 text-center">
+                            {yr.isSY ? (
+                              yr.pendingForms && yr.pendingForms > 0 ? (
+                                <span className="px-2 py-0.5 bg-amber-50 text-amber-800 border border-amber-200 rounded-md font-bold text-xs">
+                                  {yr.pendingForms} pending
+                                </span>
+                              ) : (
+                                <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-md font-bold text-xs">
+                                  ✓ Target Met
+                                </span>
+                              )
+                            ) : yr.isFY ? (
+                              <span className="text-slate-400 text-xs italic">Awaiting FY total</span>
+                            ) : (
+                              <span className="text-slate-400">-</span>
+                            )}
+                          </td>
+                          <td className="py-3 px-3.5 text-center text-emerald-700 font-bold hidden md:table-cell font-mono">
                             {yr.bothPhotos}
                           </td>
-                          <td className="py-2.5 px-3.5 text-center text-rose-600 font-bold hidden sm:table-cell">
+                          <td className="py-3 px-3.5 text-center text-rose-600 font-bold hidden md:table-cell">
                             {yr.missingPhotos > 0 ? (
-                              <span className="px-2 py-0.5 bg-rose-50 border border-rose-200 rounded-md">
+                              <span className="px-2 py-0.5 bg-rose-50 border border-rose-200 rounded-md text-xs font-bold">
                                 {yr.missingPhotos} pending
                               </span>
                             ) : (
                               <span className="text-slate-400">0</span>
                             )}
                           </td>
-                          <td className="py-2.5 px-3.5 text-right">
-                            <div className="flex items-center justify-end gap-2">
-                              <span className="font-bold text-slate-700 w-9 text-right font-mono">{pct}%</span>
-                              <div className="w-16 sm:w-24 bg-slate-200 rounded-full h-2 overflow-hidden hidden sm:block">
-                                <div
-                                  className="bg-emerald-500 h-2 rounded-full transition-all"
-                                  style={{ width: `${pct}%` }}
-                                />
+                          <td className="py-3 px-3.5 text-right">
+                            {yr.isSY && yr.targetProgress !== null ? (
+                              <div className="flex items-center justify-end gap-2">
+                                <span className="font-bold text-emerald-800 w-11 text-right font-mono text-xs">
+                                  {yr.targetProgress}%
+                                </span>
+                                <div className="w-16 sm:w-20 bg-slate-200 rounded-full h-2 overflow-hidden hidden sm:block">
+                                  <div
+                                    className={`h-2 rounded-full transition-all ${
+                                      yr.targetProgress >= 100 ? 'bg-emerald-500' : 'bg-emerald-600'
+                                    }`}
+                                    style={{ width: `${Math.min(100, yr.targetProgress)}%` }}
+                                  />
+                                </div>
                               </div>
-                            </div>
+                            ) : (
+                              <div className="flex items-center justify-end gap-2">
+                                <span className="font-semibold text-slate-500 w-11 text-right font-mono text-xs" title="Photo completion percentage">
+                                  {photoPct}% <span className="text-[10px] text-slate-400">photos</span>
+                                </span>
+                                <div className="w-16 sm:w-20 bg-slate-200 rounded-full h-2 overflow-hidden hidden sm:block">
+                                  <div
+                                    className="bg-blue-500 h-2 rounded-full transition-all"
+                                    style={{ width: `${photoPct}%` }}
+                                  />
+                                </div>
+                              </div>
+                            )}
                           </td>
                         </tr>
                       );
@@ -680,11 +794,19 @@ export const SummaryModal: React.FC<SummaryModalProps> = ({
                   </tbody>
                   <tfoot>
                     <tr className="bg-slate-50 font-bold text-slate-900 border-t-2 border-slate-200">
-                      <td className="py-2.5 px-3.5">Total across all years</td>
-                      <td className="py-2.5 px-3.5 text-center font-extrabold font-mono text-sm">{totalCount}</td>
-                      <td className="py-2.5 px-3.5 text-center text-emerald-700 hidden sm:table-cell">{completePhotosCount}</td>
-                      <td className="py-2.5 px-3.5 text-center text-rose-600 font-bold hidden sm:table-cell">{missingPhotosCount}</td>
-                      <td className="py-2.5 px-3.5 text-right font-mono">{completionPercentage}%</td>
+                      <td className="py-3 px-3.5">Total across all years</td>
+                      <td className="py-3 px-3.5 text-center font-mono text-slate-600 text-xs">SY: 519 (FY: TBD)</td>
+                      <td className="py-3 px-3.5 text-center font-extrabold font-mono text-sm text-blue-900">{totalCount}</td>
+                      <td className="py-3 px-3.5 text-center text-amber-800 font-bold text-xs">
+                        {(() => {
+                          const syItem = yearSummary.find((y) => y.name === 'SY');
+                          const syP = syItem ? Math.max(0, TOTAL_SY_EXPECTED - syItem.total) : TOTAL_SY_EXPECTED;
+                          return `${syP} pending (SY)`;
+                        })()}
+                      </td>
+                      <td className="py-3 px-3.5 text-center text-emerald-700 hidden md:table-cell font-mono">{completePhotosCount}</td>
+                      <td className="py-3 px-3.5 text-center text-rose-600 font-bold hidden md:table-cell text-xs">{missingPhotosCount}</td>
+                      <td className="py-3 px-3.5 text-right font-mono text-xs">{completionPercentage}% photos verified</td>
                     </tr>
                   </tfoot>
                 </table>
@@ -764,13 +886,23 @@ export const SummaryModal: React.FC<SummaryModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl text-xs transition-colors"
+            className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl text-xs transition-colors flex items-center gap-1.5 shadow-xs"
           >
-            Close
+            <X className="w-4 h-4" />
+            <span>Close Summary</span>
           </button>
         </div>
 
       </div>
+  );
+
+  if (isInline) {
+    return <div className="w-full animate-fade-in">{modalContent}</div>;
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 md:p-6 bg-slate-950/75 backdrop-blur-md animate-fade-in">
+      {modalContent}
     </div>
   );
 };

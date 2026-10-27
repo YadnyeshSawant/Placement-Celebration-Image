@@ -22,6 +22,7 @@ interface HeaderProps {
   onOpenAddModal: () => void;
   onOpenBatchPdf: () => void;
   onOpenSummary: () => void;
+  isSummaryOpen?: boolean;
   onExportCsv: () => void;
   isLoading: boolean;
   onRefreshData: () => void;
@@ -40,6 +41,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenAddModal,
   onOpenBatchPdf,
   onOpenSummary,
+  isSummaryOpen = false,
   onExportCsv,
   isLoading,
   onRefreshData,
@@ -141,10 +143,14 @@ export const Header: React.FC<HeaderProps> = ({
 
             <button
               onClick={onOpenSummary}
-              className="px-2.5 sm:px-3 h-9 sm:h-10 bg-indigo-50 hover:bg-indigo-100/80 text-indigo-700 border border-indigo-200 rounded-xl text-[11px] sm:text-xs font-bold transition-colors flex items-center gap-1 sm:gap-1.5 shadow-2xs"
-              title="View Summary counts of records per Department, Division, and Year"
+              className={`px-2.5 sm:px-3 h-9 sm:h-10 rounded-xl text-[11px] sm:text-xs font-bold transition-all flex items-center gap-1 sm:gap-1.5 ${
+                isSummaryOpen
+                  ? 'bg-indigo-600 text-white shadow-xs border border-indigo-700'
+                  : 'bg-indigo-50 hover:bg-indigo-100/80 text-indigo-700 border border-indigo-200 shadow-2xs'
+              }`}
+              title={isSummaryOpen ? 'Close Summary (currently displayed below filter bar)' : 'View Summary counts of records per Department, Division, and Year'}
             >
-              <BarChart2 className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
+              <BarChart2 className={`w-3.5 h-3.5 shrink-0 ${isSummaryOpen ? 'text-white' : 'text-indigo-600'}`} />
               <span>Summary</span>
             </button>
 

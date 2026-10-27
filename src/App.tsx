@@ -181,6 +181,18 @@ export default function App() {
   const [isSummaryOpen, setIsSummaryOpen] = useState(false);
   const [isAiAssistantOpen, setIsAiAssistantOpen] = useState(false);
 
+  // Smoothly scroll to inline summary when opened
+  useEffect(() => {
+    if (isSummaryOpen) {
+      setTimeout(() => {
+        const el = document.getElementById('summary-section');
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 50);
+    }
+  }, [isSummaryOpen]);
+
   // Export Individual Student PDF with Instant Loading Overlay & Download Confirmation
   const handleExportIndividualPdf = async (student: StudentRecord) => {
     // 1. Instantly trigger loading screen overlay
@@ -445,7 +457,8 @@ export default function App() {
           }
         }}
         onOpenBatchPdf={() => setIsBatchPdfOpen(true)}
-        onOpenSummary={() => setIsSummaryOpen(true)}
+        onOpenSummary={() => setIsSummaryOpen((prev) => !prev)}
+        isSummaryOpen={isSummaryOpen}
         onExportCsv={handleExportCsv}
         isLoading={isLoading}
         onRefreshData={loadDefaultDataset}
@@ -465,6 +478,18 @@ export default function App() {
 
       {/* Main Content Area */}
       <main className="flex-1 w-full px-4 sm:px-6 lg:px-8 py-6">
+
+        {/* Inline Records Summary & Statistics (Rendered directly below Filter Bar) */}
+        {isSummaryOpen && (
+          <div id="summary-section" className="mb-6">
+            <SummaryModal
+              students={students}
+              filteredStudents={filteredStudents}
+              onClose={() => setIsSummaryOpen(false)}
+              isInline={true}
+            />
+          </div>
+        )}
         
         {/* Error State Banner */}
         {error && (
@@ -492,7 +517,11 @@ export default function App() {
         ) : (
           <>
             {/* Visual Overview Statistics Header */}
-            <StatsOverview students={students} />
+            <StatsOverview
+              students={students}
+              selectedYear={filters.currentYear}
+              onYearChange={(year) => setFilters((prev) => ({ ...prev, currentYear: year }))}
+            />
 
             {/* Active Filters Bar Indicator */}
             <div className="flex items-center justify-between mb-4">
@@ -650,15 +679,6 @@ export default function App() {
           }
           onClose={() => setIsBatchPdfOpen(false)}
           onStartExportWithLoading={handleStartExportWithLoading}
-        />
-      )}
-
-      {/* Records Summary Modal */}
-      {isSummaryOpen && (
-        <SummaryModal
-          students={students}
-          filteredStudents={filteredStudents}
-          onClose={() => setIsSummaryOpen(false)}
         />
       )}
 
