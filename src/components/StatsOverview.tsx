@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Users, ShieldCheck, AlertCircle, ChevronDown, ChevronUp, BarChart2, Calendar, CheckCircle2 } from 'lucide-react';
-import { StudentRecord } from '../types/student';
+import { StudentRecord, getDepartmentDisplayName } from '../types/student';
 
 interface StatsOverviewProps {
   students: StudentRecord[];
@@ -90,6 +90,7 @@ export const StatsOverview: React.FC<StatsOverviewProps> = ({
         );
       }
       if (deptKey === 'MSC BT') return d.includes('BT') || d.includes('BIOTECH');
+      if (deptKey === 'BSC CC') return d === 'BSC CC' || d.includes('BSC CC') || d.includes('CLOUD');
       return false;
     }).length;
   };
@@ -452,7 +453,7 @@ export const StatsOverview: React.FC<StatsOverviewProps> = ({
                   key={d.name}
                   className="px-2.5 py-1 bg-slate-50 border border-slate-200 rounded-lg text-slate-700 text-[11px] font-medium"
                 >
-                  {d.name}:{' '}
+                  {getDepartmentDisplayName(d.name)}:{' '}
                   <strong className="text-blue-900 font-bold font-mono">{d.count}</strong>
                 </span>
               ))
@@ -490,7 +491,7 @@ export const StatsOverview: React.FC<StatsOverviewProps> = ({
                   key={name}
                   className="px-2.5 py-1 bg-slate-50 border border-slate-200 rounded-lg text-slate-700 text-[11px] font-medium"
                 >
-                  {name}: <strong className="text-blue-900 font-bold font-mono">{count}</strong>
+                  {getDepartmentDisplayName(name)}: <strong className="text-blue-900 font-bold font-mono">{count}</strong>
                 </span>
               ))
             ) : (

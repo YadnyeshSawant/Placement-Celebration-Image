@@ -297,7 +297,12 @@ export default function App() {
         }
 
         if (filters.department !== 'ALL') {
-          if (s.department !== filters.department) return false;
+          const sDept = (s.department || '').trim().toUpperCase();
+          const fDept = filters.department.trim().toUpperCase();
+          if (sDept !== fDept) {
+            const isMatchBscCc = fDept === 'BSC CC' && (sDept === 'BSC CC' || sDept.includes('CLOUD'));
+            if (!isMatchBscCc) return false;
+          }
         }
 
         if (filters.division !== 'ALL') {
@@ -619,7 +624,7 @@ export default function App() {
             <strong>Placement Celebration Student Image Collection Portal</strong>
           </div>
           <div>
-            Departments: MCA, MSC CS, MSC DSBSA, MSC BT, BSC CS, BSC DSBDA, BCA
+            Departments: MCA, MSC CS, MSC DSBSA, MSC BT, BSC CC (Cloud Computing), BSC CS, BSC DSBDA, BCA
           </div>
         </div>
       </footer>

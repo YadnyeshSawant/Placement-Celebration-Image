@@ -1,5 +1,5 @@
 import React from 'react';
-import { StudentRecord } from '../types/student';
+import { StudentRecord, getDepartmentDisplayName } from '../types/student';
 import { getDisplayImageUrl, getDriveViewUrl } from '../services/driveUtils';
 import { Download, ExternalLink, Eye, CheckCircle2, AlertCircle } from 'lucide-react';
 
@@ -64,7 +64,7 @@ export const StudentTable: React.FC<StudentTableProps> = ({
 
                   <td className="py-3 px-4">
                     <span className="px-2 py-0.5 bg-indigo-50 text-indigo-700 font-bold rounded border border-indigo-100">
-                      {student.department}
+                      {getDepartmentDisplayName(student.department)}
                     </span>
                   </td>
 

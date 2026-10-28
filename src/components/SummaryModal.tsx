@@ -12,7 +12,7 @@ import {
   Check,
   Search
 } from 'lucide-react';
-import { StudentRecord } from '../types/student';
+import { StudentRecord, getDepartmentDisplayName } from '../types/student';
 
 interface SummaryModalProps {
   students: StudentRecord[];
@@ -240,10 +240,11 @@ export const SummaryModal: React.FC<SummaryModalProps> = ({
 
     text += `--- BY DEPARTMENT (SY COHORT TARGETS: MCA: 323, DSBSA: 87, CS: 77, BT: 32 = 519 TOTAL) ---\n`;
     deptSummary.forEach((d) => {
+      const deptName = getDepartmentDisplayName(d.name);
       if (d.target > 0) {
-        text += `${d.name}: Target ${d.target} | Submitted ${d.total} | Pending Forms: ${d.pendingFormSubmissions} | Complete Photos: ${d.bothPhotos} (${d.missingPhotos} pending photos) [${d.targetReachedPct}% of SY target]\n`;
+        text += `${deptName}: Target ${d.target} | Submitted ${d.total} | Pending Forms: ${d.pendingFormSubmissions} | Complete Photos: ${d.bothPhotos} (${d.missingPhotos} pending photos) [${d.targetReachedPct}% of SY target]\n`;
       } else {
-        text += `${d.name}: Submitted ${d.total} | Complete Photos: ${d.bothPhotos} (${d.missingPhotos} pending photos)\n`;
+        text += `${deptName}: Submitted ${d.total} | Complete Photos: ${d.bothPhotos} (${d.missingPhotos} pending photos)\n`;
       }
     });
 
@@ -520,7 +521,7 @@ export const SummaryModal: React.FC<SummaryModalProps> = ({
                         <tr key={d.name} className="hover:bg-slate-50 transition-colors">
                           <td className="py-3 px-3.5 font-bold text-slate-900">
                             <span className="inline-block px-2.5 py-0.5 rounded-lg bg-blue-50 text-blue-700 font-extrabold mr-2 border border-blue-200">
-                              {d.name}
+                              {getDepartmentDisplayName(d.name)}
                             </span>
                           </td>
                           <td className="py-3 px-3.5 text-center font-extrabold text-slate-700 font-mono">
@@ -849,7 +850,7 @@ export const SummaryModal: React.FC<SummaryModalProps> = ({
                     {filteredCombined.map((c, i) => (
                       <tr key={`${c.department}_${c.year}_${c.division}`} className="hover:bg-slate-50">
                         <td className="py-2 px-3 text-slate-400 font-mono text-[11px]">{i + 1}</td>
-                        <td className="py-2 px-3 font-bold text-slate-900">{c.department}</td>
+                        <td className="py-2 px-3 font-bold text-slate-900">{getDepartmentDisplayName(c.department)}</td>
                         <td className="py-2 px-3 text-center font-semibold text-slate-700">
                           <span className="px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-800 text-[10px] font-bold">
                             {c.year}

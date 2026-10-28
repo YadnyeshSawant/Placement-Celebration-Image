@@ -17,6 +17,7 @@ export type DepartmentType =
   | 'MSC CS'
   | 'MSC DSBSA'
   | 'MSC BT'
+  | 'BSC CC'
   | 'BSC CS'
   | 'BSC DSBDA'
   | 'BCA'
@@ -28,10 +29,30 @@ export const DEPARTMENTS: { id: DepartmentType; label: string; count?: number }[
   { id: 'MSC CS', label: 'MSC CS' },
   { id: 'MSC DSBSA', label: 'MSC DSBSA' },
   { id: 'MSC BT', label: 'MSC BT' },
+  { id: 'BSC CC', label: 'BSC CC (Cloud Computing)' },
   { id: 'BSC CS', label: 'BSC CS' },
   { id: 'BSC DSBDA', label: 'BSC DSBDA' },
   { id: 'BCA', label: 'BCA' },
 ];
+
+export function getDepartmentDisplayName(dept?: string | null): string {
+  if (!dept) return '';
+  const trimmed = dept.trim();
+  const upper = trimmed.toUpperCase();
+  if (
+    upper === 'BSC CC' ||
+    upper === 'BSC CC (CLOUD COMPUTING)' ||
+    upper.includes('CLOUD COMPUTING') ||
+    upper.includes('CLOUD')
+  ) {
+    return 'BSC CC (Cloud Computing)';
+  }
+  const match = DEPARTMENTS.find((d) => d.id === upper);
+  if (match && match.id !== 'ALL') {
+    return match.label;
+  }
+  return trimmed;
+}
 
 export type ViewMode = 'grid' | 'gallery' | 'table' | 'analytics';
 

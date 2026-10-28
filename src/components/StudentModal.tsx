@@ -11,7 +11,7 @@ import {
   FileSearch,
   UserCheck
 } from 'lucide-react';
-import { StudentRecord } from '../types/student';
+import { StudentRecord, getDepartmentDisplayName } from '../types/student';
 import { getDriveViewUrl, getDriveDownloadUrl, getDriveEmbedUrl, getDisplayImageUrl } from '../services/driveUtils';
 
 interface StudentModalProps {
@@ -60,7 +60,7 @@ export const StudentModal: React.FC<StudentModalProps> = ({
               <p className="text-[11px] sm:text-xs font-semibold text-slate-500 flex items-center gap-2 mt-0.5">
                 <span>PRN: <strong className="text-blue-600 font-mono">{student.prn}</strong></span>
                 <span>•</span>
-                <span>{student.currentYear} {student.department} - Div {student.division}</span>
+                <span>{student.currentYear} {getDepartmentDisplayName(student.department)} - Div {student.division}</span>
               </p>
             </div>
           </div>
@@ -251,7 +251,7 @@ export const StudentModal: React.FC<StudentModalProps> = ({
 
                 <div>
                   <span className="text-[11px] sm:text-xs font-semibold text-slate-400 block mb-0.5">Department & Branch</span>
-                  <span className="text-xs sm:text-sm font-bold text-slate-900">{student.department}</span>
+                  <span className="text-xs sm:text-sm font-bold text-slate-900">{getDepartmentDisplayName(student.department)}</span>
                 </div>
 
                 <div className="grid grid-cols-2 gap-2.5 pt-1">

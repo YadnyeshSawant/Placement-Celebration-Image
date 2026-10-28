@@ -10,7 +10,7 @@ import {
   Mail,
   GraduationCap
 } from 'lucide-react';
-import { StudentRecord } from '../types/student';
+import { StudentRecord, getDepartmentDisplayName } from '../types/student';
 import {
   getDisplayImageUrl,
   getDriveViewUrl,
@@ -54,7 +54,7 @@ export const StudentCard: React.FC<StudentCardProps> = ({
                 {student.prn}
               </span>
               <span className="text-[10px] uppercase font-extrabold px-2 py-0.5 bg-indigo-100/80 text-indigo-800 border border-indigo-200/80 rounded-md shadow-2xs">
-                {student.department}
+                {getDepartmentDisplayName(student.department)}
               </span>
             </div>
 

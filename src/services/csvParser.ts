@@ -91,6 +91,7 @@ function sanitizeDepartment(deptRaw: string): string {
   if (clean.includes('MSC CS') || clean.includes('M.SC. CS') || clean.includes('MSC COMPUTER SCIENCE')) return 'MSC CS';
   if (clean.includes('DSBSA') || clean.includes('BUSINESS ANALYTICS')) return 'MSC DSBSA';
   if (clean.includes('MSC BT') || clean.includes('BIOTECH')) return 'MSC BT';
+  if (clean.includes('BSC CC') || clean.includes('CLOUD COMPUTING') || clean.includes('CLOUD')) return 'BSC CC';
   if (clean.includes('BSC CS') || clean.includes('B.SC. CS')) return 'BSC CS';
   if (clean.includes('DSBDA') || clean.includes('DATA SCIENCE')) return 'BSC DSBDA';
   if (clean.includes('BCA')) return 'BCA';

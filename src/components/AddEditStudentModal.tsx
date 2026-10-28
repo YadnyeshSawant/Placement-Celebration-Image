@@ -116,6 +116,7 @@ export const AddEditStudentModal: React.FC<AddEditStudentModalProps> = ({
                 <option value="MSC CS">MSC CS</option>
                 <option value="MSC DSBSA">MSC DSBSA</option>
                 <option value="MSC BT">MSC BT</option>
+                <option value="BSC CC">BSC CC (Cloud Computing)</option>
                 <option value="BSC CS">BSC CS</option>
                 <option value="BSC DSBDA">BSC DSBDA</option>
                 <option value="BCA">BCA</option>

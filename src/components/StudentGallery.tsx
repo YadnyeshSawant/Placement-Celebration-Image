@@ -1,5 +1,5 @@
 import React from 'react';
-import { StudentRecord } from '../types/student';
+import { StudentRecord, getDepartmentDisplayName } from '../types/student';
 import { Eye, FileSearch } from 'lucide-react';
 import { getDisplayImageUrl } from '../services/driveUtils';
 
@@ -38,7 +38,7 @@ export const StudentGallery: React.FC<StudentGalleryProps> = ({
                 </p>
               </div>
               <span className="px-2 py-0.5 bg-blue-100 text-blue-800 text-[10px] font-bold rounded-md shrink-0">
-                {student.department}
+                {getDepartmentDisplayName(student.department)}
               </span>
             </div>
 
